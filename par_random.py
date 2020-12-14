@@ -6,6 +6,7 @@ from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
 import json
 from multiprocessing import Process,Manager
+import tensorflow.compat.v2 as tf
 import tensorflow_datasets as tfds
 import time
 
@@ -15,6 +16,8 @@ from itertools import combinations
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 
+tf.enable_v2_behavior()
+
 def get_train_partition(data,split):
   return data[0:int(split*len(data))]
 def get_test_partition(data,split):
@@ -23,7 +26,7 @@ def get_test_partition(data,split):
 ds_train, ds_info = tfds.load(
     'iris',
     split=['train'],
-    shuffle_files=True,
+    shuffle_files=False,
     as_supervised=True,
     with_info=True,
 )
@@ -31,19 +34,21 @@ ds_train, ds_info = tfds.load(
 ds_numpy = tfds.as_numpy(ds_train)
 profile_features = []
 labels = []
-for ex in ds_numpy:
-  features.append(ex[0])
+for ex in ds_numpy[0]:
+  profile_features.append(ex[0])
   labels.append(ex[1])
 
+print("dataset size:",len(labels))
+
 def Error(labels,preds):
-  return 1 - accuracy_score(labels,preds)
+  return accuracy_score(labels,preds)
 
 """## Limited Data Experiments"""
 print("begin experiment")
 num_trials = 32
-sub_proc_trials = 10000
+sub_proc_trials = 100000
 this_train_sizes = np.linspace(0.01,1,100)
-results = Manager().list([[0 for j in range(sub_proc_trials*num_trials)] for i in range(len(this_train_sizes))])
+results = Manager().list([0 for i in range(sub_proc_trials*num_trials*len(this_train_sizes))])
 
 def run_trial(profile_features,labels,this_train_sizes,results,num_trials,n):
   print("trial",n)
@@ -57,7 +62,7 @@ def run_trial(profile_features,labels,this_train_sizes,results,num_trials,n):
       else:
         cur_X_train, cur_y_train = profile_features,labels
       reg = RandomForestClassifier().fit(cur_X_train,cur_y_train)
-      results[i][n*num_trials + j] = Error(labels,reg.predict(profile_features))
+      results[num_trials*len(this_train_sizes)*n  + j*len(this_train_sizes) + i] = Error(labels,reg.predict(profile_features))
 
 procs = []
 for n in range(num_trials):
@@ -68,6 +73,8 @@ for n in range(num_trials):
   procs[n].join()
 
 results = np.array(results)
+results = results.reshape((num_trials*sub_proc_trials,len(this_train_sizes)))
+print(results)
 min_results = np.min(results,axis=0)
 avg_results = np.mean(results,axis=0)
 max_results = np.max(results,axis=0)
