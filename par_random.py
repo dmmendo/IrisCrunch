@@ -43,32 +43,36 @@ print("begin experiment")
 num_trials = 32
 sub_proc_trials = 10000
 this_train_sizes = np.linspace(0.01,1,100)
-results = [0 for i in range(len(this_train_sizes)*num_trials)]
-results = Manager().list([0 for i in range(len(this_train_sizes)*num_trials)])
+results = Manager().list([[0 for j in range(sub_proc_trials*num_trials)] for i in range(len(this_train_sizes))])
 
-def run_trial(profile_features,labels,this_train_sizes,results,n):
+def run_trial(profile_features,labels,this_train_sizes,results,num_trials,n):
   print("trial",n)
   random.seed(n)
   np.random.seed(n)
-  profile_features,labels = shuffle(profile_features,labels)
-  for i in range(0,len(this_train_sizes)): 
-    if 1-this_train_sizes[i] > 0:
-      cur_X_train, cur_X_test, cur_y_train, cur_y_test = train_test_split(profile_features,labels,test_size=1-this_train_sizes[i],random_state = n)
-    else:
-      cur_X_train, cur_y_train = profile_features,labels
-    reg = RandomForestClassifier().fit(cur_X_train,cur_y_train)
-    results[n*len(this_train_sizes) + i] = Error(labels,reg.predict(profile_features))
+  for i in range(0,len(this_train_sizes)):
+    for j in range(num_trials):
+      profile_features,labels = shuffle(profile_features,labels)
+      if 1-this_train_sizes[i] > 0:
+        cur_X_train, cur_X_test, cur_y_train, cur_y_test = train_test_split(profile_features,labels,test_size=1-this_train_sizes[i],random_state = n)
+      else:
+        cur_X_train, cur_y_train = profile_features,labels
+      reg = RandomForestClassifier().fit(cur_X_train,cur_y_train)
+      results[i][n*num_trials + j] = Error(labels,reg.predict(profile_features))
 
 procs = []
 for n in range(num_trials):
-  p = Process(target=run_trial, args=(profile_features,labels,this_train_sizes,results,n))
+  p = Process(target=run_trial, args=(profile_features,labels,this_train_sizes,results,sub_proc_trials,n))
   p.start()
   procs.append(p)
 for n in range(num_trials):
   procs[n].join()
 
-results = np.array(results).reshape((num_trials,len(this_train_sizes)))
-results = np.min(results,axis=0)
+results = np.array(results)
+min_results = np.min(results,axis=0)
+avg_results = np.mean(results,axis=0)
+max_results = np.max(results,axis=0)
 
-json.dump(results.tolist(),open("random_32000sim.json","w"))
-json.dump(this_train_sizes.tolist(),open("trainsize_random_32000sim.json","w"))
+json.dump(avg_results.tolist(),open("avg_random_"+str(num_trials*sub_proc_trials)+"sim.json","w"))
+json.dump(min_results.tolist(),open("min_random_"+str(num_trials*sub_proc_trials)+"sim.json","w"))
+json.dump(max_results.tolist(),open("max_random_"+str(num_trials*sub_proc_trials)+"sim.json","w"))
+json.dump(this_train_sizes.tolist(),open("trainsize_random_"+str(num_trials*sub_proc_trials)+"sim.json","w"))
