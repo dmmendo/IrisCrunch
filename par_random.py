@@ -46,7 +46,7 @@ def Error(labels,preds):
 """## Limited Data Experiments"""
 print("begin experiment")
 num_trials = 32
-sub_proc_trials = 100000
+sub_proc_trials = 1000
 this_train_sizes = np.linspace(0.01,1,100)
 results = Manager().list([0 for i in range(sub_proc_trials*num_trials*len(this_train_sizes))])
 
