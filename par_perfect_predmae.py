@@ -58,7 +58,7 @@ def run_trial(profile_features,labels,this_train_sizes,results,n):
     sample_costs = []
     num_to_profile = max(1,int(np.floor(len(labels)*(this_train_sizes[i]-this_train_sizes[i-1]))))
     available_list = shuffle(list(available_sample)) #for num_to_profile = 1
-    K = random.randint(0,99)
+    print(num_to_profile)
     for j in range(len(available_sample)):
       if num_to_profile == 1:
         new_sample_idx = [available_list[j]]
@@ -66,7 +66,7 @@ def run_trial(profile_features,labels,this_train_sizes,results,n):
         new_sample_idx = random.sample(available_sample,min(num_to_profile,len(available_sample)))
       new_X_train = np.array([profile_features[idx] for idx in new_sample_idx])
       new_y_train = np.array([labels[idx] for idx in new_sample_idx])
-      reg = RandomForestClassifier(n_estimators=100).fit(np.concatenate((cur_X_train,new_X_train)),np.concatenate((cur_y_train,cur_reg.estimators_[K].predict(new_X_train))))
+      reg = RandomForestClassifier(n_estimators=100).fit(np.concatenate((cur_X_train,new_X_train)),np.concatenate((cur_y_train,new_y_train)))
       samples.append((new_X_train,new_y_train,new_sample_idx))
       sample_costs.append(accuracy_score(labels,reg.predict(profile_features)))
       
@@ -89,5 +89,5 @@ results = np.array(results).reshape((num_trials,len(this_train_sizes)))
 results = np.sum(results,axis=0)
 results /=num_trials
 
-json.dump(results.tolist(),open("bspredmae_10sim.json","w"))
-json.dump(this_train_sizes.tolist(),open("trainsize_bspredmae_10sim.json","w"))
+json.dump(results.tolist(),open("perfectpredmae_10sim.json","w"))
+json.dump(this_train_sizes.tolist(),open("trainsize_perfectpredmae_10sim.json","w"))
