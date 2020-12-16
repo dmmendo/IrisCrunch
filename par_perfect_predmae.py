@@ -58,7 +58,6 @@ def run_trial(profile_features,labels,this_train_sizes,results,n):
     sample_costs = []
     num_to_profile = max(1,int(np.floor(len(labels)*(this_train_sizes[i]-this_train_sizes[i-1]))))
     available_list = shuffle(list(available_sample)) #for num_to_profile = 1
-    print(num_to_profile)
     for j in range(len(available_sample)):
       if num_to_profile == 1:
         new_sample_idx = [available_list[j]]
