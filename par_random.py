@@ -14,7 +14,7 @@ from itertools import permutations
 from itertools import combinations
 
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import log_loss
 
 tf.enable_v2_behavior()
 
@@ -40,13 +40,10 @@ for ex in ds_numpy[0]:
 
 print("dataset size:",len(labels))
 
-def Error(labels,preds):
-  return accuracy_score(labels,preds)
-
 """## Limited Data Experiments"""
 print("begin experiment")
 num_trials = 32
-sub_proc_trials = 1000
+sub_proc_trials = 100
 this_train_sizes = np.linspace(0.01,1,100)
 results = Manager().list([0 for i in range(sub_proc_trials*num_trials*len(this_train_sizes))])
 
@@ -62,7 +59,10 @@ def run_trial(profile_features,labels,this_train_sizes,results,num_trials,n):
       else:
         cur_X_train, cur_y_train = profile_features,labels
       reg = RandomForestClassifier().fit(cur_X_train,cur_y_train)
-      results[num_trials*len(this_train_sizes)*n  + j*len(this_train_sizes) + i] = Error(labels,reg.predict(profile_features))
+      pred_probs_tmp = reg.predict_proba(profile_features)
+      pred_probs = np.zeros((len(pred_probs_tmp),3))
+      pred_probs[:pred_probs_tmp.shape[0],:pred_probs_tmp.shape[1]] = pred_probs_tmp
+      results[num_trials*len(this_train_sizes)*n  + j*len(this_train_sizes) + i] = log_loss(labels,pred_probs)
 
 procs = []
 for n in range(num_trials):
