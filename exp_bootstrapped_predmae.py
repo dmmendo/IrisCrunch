@@ -40,7 +40,7 @@ print("dataset size:",len(labels))
 
 """## Limited Data Experiments"""
 print("begin experiment")
-num_trials = 10
+num_trials = 100
 this_train_sizes = np.linspace(1/len(labels),1,len(labels))
 results = [0 for i in range(len(this_train_sizes)*num_trials)]
 results = Manager().list([0 for i in range(len(this_train_sizes)*num_trials)])

@@ -59,7 +59,6 @@ def run_trial(profile_features,labels,this_train_sizes,results,n):
   for i in range(1,len(this_train_sizes)):
     samples = []
     sample_costs = []
-    K = random.randint(0,99)
     num_to_profile = max(1,int(np.floor(len(labels)*(this_train_sizes[i]-this_train_sizes[i-1]))))
     available_list = shuffle(list(available_sample)) #for num_to_profile = 1
     for j in range(len(available_sample)):
@@ -69,7 +68,7 @@ def run_trial(profile_features,labels,this_train_sizes,results,n):
         new_sample_idx = random.sample(available_sample,min(num_to_profile,len(available_sample)))
       new_X_train = np.array([profile_features[idx] for idx in new_sample_idx])
       new_y_train = np.array([labels[idx] for idx in new_sample_idx])
-      reg = RandomForestClassifier(n_estimators=100).fit(np.concatenate((cur_X_train,new_X_train)),np.concatenate((cur_y_train,cur_reg.estimators_[K].predict(new_X_train))))
+      reg = RandomForestClassifier(n_estimators=100).fit(np.concatenate((cur_X_train,new_X_train)),np.concatenate((cur_y_train,cur_reg.predict(new_X_train))))
       pred_probs_tmp = reg.predict_proba(profile_features)
       pred_probs = np.zeros((len(pred_probs_tmp),3))
       pred_probs[:pred_probs_tmp.shape[0],:pred_probs_tmp.shape[1]] = pred_probs_tmp
@@ -98,5 +97,5 @@ results = np.array(results).reshape((num_trials,len(this_train_sizes)))
 results = np.sum(results,axis=0)
 results /=num_trials
 
-json.dump(results.tolist(),open("bspredmae_10sim.json","w"))
-json.dump(this_train_sizes.tolist(),open("trainsize_bspredmae_10sim.json","w"))
+json.dump(results.tolist(),open("predmae_10sim.json","w"))
+json.dump(this_train_sizes.tolist(),open("trainsize_predmae_10sim.json","w"))
